@@ -6,39 +6,39 @@ Toy experiments for studying how classifier-free guidance (CFG) changes the geom
 
 Consider an invertible flow map from latent space to data space:
 
-$$
+```math
 x = f(z), \qquad z \sim p_Z.
-$$
+```
 
 The map transforms the base distribution into a data distribution:
 
-$$
+```math
 f_* p_Z = p_X.
-$$
+```
 
 We are interested in a family of distributions indexed by a guidance scale $\omega$:
 
-$$
+```math
 \{p_\omega\}_{\omega}.
-$$
+```
 
 For each member of this distribution family, suppose there exists a corresponding invertible flow map:
 
-$$
+```math
 p_\omega = (f^{(\omega)})_* p_Z.
-$$
+```
 
 We take the reference scale to satisfy
 
-$$
+```math
 f^{(1)} = f.
-$$
+```
 
 This gives a family of flow maps:
 
-$$
+```math
 \mathcal{F} = \{f^{(\omega)}\}_{\omega}.
-$$
+```
 
 The central question of this project is:
 
@@ -50,45 +50,45 @@ The central question of this project is:
 
 Consider a sample from the reference data distribution:
 
-$$
+```math
 x \sim p_X.
-$$
+```
 
 Since $f$ is invertible, the latent variable associated with $x$ is
 
-$$
+```math
 z = f^{-1}(x).
-$$
+```
 
 We can keep this latent coordinate fixed and apply another member of the flow-map family:
 
-$$
+```math
 f^{(\omega)}(z).
-$$
+```
 
 This defines the induced re-mapping
 
-$$
+```math
 g_\omega(x) = f^{(\omega)}(f^{-1}(x)).
-$$
+```
 
 Equivalently,
 
-$$
+```math
 g_\omega = f^{(\omega)} \circ f^{-1}.
-$$
+```
 
 In flow-map notation, this can be written as
 
-$$
+```math
 g_\omega = f_{1,0}^{(\omega)} \circ f_{0,1}.
-$$
+```
 
 At the reference scale,
 
-$$
+```math
 g_1 = f \circ f^{-1} = I.
-$$
+```
 
 Therefore, $g_\omega$ describes how changing the guidance scale acts directly on samples from the reference data distribution while keeping their underlying latent coordinates fixed.
 
@@ -100,44 +100,44 @@ One candidate mechanism for reduced mapping complexity is contraction of the ind
 
 For each data point $x$, consider the Jacobian
 
-$$
+```math
 J_{g_\omega}(x) = \nabla_x g_\omega(x).
-$$
+```
 
 The operator norm of the Jacobian is its largest singular value:
 
-$$
+```math
 \|J_{g_\omega}(x)\|_{\mathrm{op}}
 =
 \sigma_{\max}(J_{g_\omega}(x)).
-$$
+```
 
 If
 
-$$
+```math
 \|J_{g_\omega}(x)\|_{\mathrm{op}} < 1,
-$$
+```
 
 then $g_\omega$ is locally contractive at $x$.
 
 We therefore consider the average local expansion or contraction over the data distribution:
 
-$$
+```math
 A(\omega)
 =
 \mathbb{E}_{x \sim p_X}
 \left[
 \|\nabla_x g_\omega(x)\|_{\mathrm{op}}
 \right].
-$$
+```
 
 This motivates the candidate mechanism
 
-$$
+```math
 \text{contraction of } g_\omega
 \quad \Longrightarrow \quad
 \text{reduced mapping complexity of } f^{(\omega)}.
-$$
+```
 
 The purpose of the first toy experiment is not to assume that this mechanism is correct.
 
@@ -155,37 +155,37 @@ For a sufficiently small toy problem, we can estimate or compute the marginal ve
 
 Let
 
-$$
+```math
 v_t^{(\omega)}(x)
-$$
+```
 
 denote the marginal velocity field associated with guidance scale $\omega$.
 
 The corresponding dynamics satisfy
 
-$$
+```math
 \frac{d x_t}{dt}
 =
 v_t^{(\omega)}(x_t).
-$$
+```
 
 By numerically integrating this velocity field, we can estimate the corresponding flow map.
 
 For a general time pair, denote the flow map by
 
-$$
+```math
 f_{t,s}^{(\omega)}.
-$$
+```
 
 In settings involving many possible time pairs, exhaustively enumerating every pair satisfying $s<t$ may be unnecessary.
 
 Instead, time pairs can be sampled from a time distribution:
 
-$$
+```math
 s,t \sim p_T,
 \qquad
 s<t.
-$$
+```
 
 This allows us to study the flow-map family without explicitly enumerating every possible time pair.
 
@@ -195,45 +195,45 @@ This allows us to study the flow-map family without explicitly enumerating every
 
 Once the required flow maps have been obtained through numerical integration, construct
 
-$$
+```math
 g_\omega
 =
 f_{1,0}^{(\omega)}
 \circ
 f_{0,1}.
-$$
+```
 
 For a data point $x$, the computation is
 
-$$
+```math
 x
 \longrightarrow
 f_{0,1}(x)
 \longrightarrow
 f_{1,0}^{(\omega)}(f_{0,1}(x)).
-$$
+```
 
 Therefore,
 
-$$
+```math
 g_\omega(x)
 =
 f_{1,0}^{(\omega)}(f_{0,1}(x)).
-$$
+```
 
 The first important sanity check is the reference scale.
 
 Since
 
-$$
+```math
 g_1 = I,
-$$
+```
 
 we should obtain numerically
 
-$$
+```math
 g_1(x) \approx x.
-$$
+```
 
 Failure of this check would indicate an issue with the velocity estimation, numerical integration, time convention, or composition of the flow maps.
 
@@ -245,27 +245,27 @@ After constructing $g_\omega$, compute its Jacobian with respect to the input.
 
 For each sample $x_i$,
 
-$$
+```math
 J_i^{(\omega)}
 =
 \nabla_x g_\omega(x_i).
-$$
+```
 
 Then compute the largest singular value:
 
-$$
+```math
 a_i^{(\omega)}
 =
 \sigma_{\max}(J_i^{(\omega)}).
-$$
+```
 
 Equivalently,
 
-$$
+```math
 a_i^{(\omega)}
 =
 \|J_i^{(\omega)}\|_{\mathrm{op}}.
-$$
+```
 
 The operator norm measures the maximum local scaling induced by $g_\omega$ around the sample $x_i$.
 
@@ -277,46 +277,46 @@ Values below one correspond to local contraction, while values above one indicat
 
 For each guidance scale, estimate
 
-$$
+```math
 A(\omega)
 \approx
 \frac{1}{N}
 \sum_{i=1}^{N}
 \|J_i^{(\omega)}\|_{\mathrm{op}}.
-$$
+```
 
 This estimates
 
-$$
+```math
 A(\omega)
 =
 \mathbb{E}_{x \sim p_X}
 \left[
 \|\nabla_x g_\omega(x)\|_{\mathrm{op}}
 \right].
-$$
+```
 
 The order of operations is important.
 
 We compute the operator norm for each sample and then average:
 
-$$
+```math
 \mathbb{E}
 \left[
 \|\nabla g_\omega\|_{\mathrm{op}}
 \right].
-$$
+```
 
 We do not first average the Jacobians and then compute the operator norm:
 
-$$
+```math
 \left\|
 \mathbb{E}
 \left[
 \nabla g_\omega
 \right]
 \right\|_{\mathrm{op}}.
-$$
+```
 
 The sample-wise operator norms should also be retained rather than storing only their mean.
 
@@ -330,46 +330,46 @@ Repeat the procedure across guidance scales $\omega$.
 
 The primary visualization is
 
-$$
+```math
 \omega
 \quad \text{vs.} \quad
 A(\omega),
-$$
+```
 
 where
 
-$$
+```math
 A(\omega)
 =
 \mathbb{E}_{x \sim p_X}
 \left[
 \|\nabla_x g_\omega(x)\|_{\mathrm{op}}
 \right].
-$$
+```
 
 At the reference scale,
 
-$$
+```math
 g_1 = I,
-$$
+```
 
 so ideally
 
-$$
+```math
 \nabla g_1 = I
-$$
+```
 
 and therefore
 
-$$
+```math
 A(1) = 1.
-$$
+```
 
 Numerically, we expect
 
-$$
+```math
 A(1) \approx 1.
-$$
+```
 
 The primary empirical question is:
 
@@ -389,19 +389,19 @@ The sample-wise singular values are therefore also important, especially if some
 
 The broader object of interest is not a single flow map but the entire family
 
-$$
+```math
 \mathcal{F}
 =
 \{f^{(\omega)}\}_{\omega}.
-$$
+```
 
 Changing $\omega$ gives a controlled family of maps whose geometry can be compared.
 
 The contraction experiment asks whether the corresponding induced re-mappings
 
-$$
+```math
 \{g_\omega\}_{\omega}
-$$
+```
 
 develop a particular geometric property as $\omega$ changes.
 
@@ -417,34 +417,34 @@ The next question is whether the geometric behavior of $g_\omega$ is related to 
 
 Let
 
-$$
+```math
 \mathcal{C}(f^{(\omega)})
-$$
+```
 
 denote a suitable measure of mapping complexity.
 
 The broader relationship we want to investigate is
 
-$$
+```math
 \omega
 \longrightarrow
 P(g_\omega)
 \longrightarrow
 \mathcal{C}(f^{(\omega)}),
-$$
+```
 
 where $P(g_\omega)$ is some measurable geometric property of the induced re-mapping.
 
 The first candidate is contraction, represented empirically by
 
-$$
+```math
 P(g_\omega)
 =
 \mathbb{E}_{x \sim p_X}
 \left[
 \|\nabla_x g_\omega(x)\|_{\mathrm{op}}
 \right].
-$$
+```
 
 This leads to the question:
 
@@ -460,11 +460,11 @@ Contraction may not fully characterize the geometry of the CFG family.
 
 More generally, we want to identify properties of $g_\omega$ such that
 
-$$
+```math
 P(g_\omega)
 \quad \Longrightarrow \quad
 \text{lower mapping complexity of } f^{(\omega)}.
-$$
+```
 
 If contraction does not explain the observed behavior, the next question becomes:
 
@@ -480,13 +480,13 @@ The longer-term goal is to understand what makes an interpolation induce a simpl
 
 The working direction is
 
-$$
+```math
 \text{flow-map family}
 \longrightarrow
 \text{geometry of the induced re-mapping}
 \longrightarrow
 \text{mapping complexity}.
-$$
+```
 
 If particular geometric properties consistently predict reduced mapping complexity, they may provide a way to characterize better interpolation paths.
 
