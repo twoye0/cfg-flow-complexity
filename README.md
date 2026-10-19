@@ -1,10 +1,10 @@
 # Mapping Complexity over the CFG Family
 
-Toy experiments for studying how classifier-free guidance (CFG) changes the geometry of flow maps, and whether these changes can help explain mapping complexity.
+Toy experiments for studying how classifier-free guidance (CFG) changes the geometry of flow maps and whether these geometric changes can explain mapping complexity.
 
 ## Motivation
 
-We consider an invertible flow map
+Consider an invertible flow map
 
 $$
 x = f(z), \qquad z \sim p_Z,
@@ -13,10 +13,10 @@ $$
 such that
 
 $$
-f_{\#}p_Z = p_X.
+f_* p_Z = p_X.
 $$
 
-Now consider a family of distributions indexed by a guidance parameter $\omega$,
+We consider a family of distributions indexed by a guidance parameter $\omega$,
 
 $$
 \{p_\omega\}_\omega,
@@ -25,36 +25,36 @@ $$
 with corresponding invertible flow maps
 
 $$
-p_\omega = (f^{(\omega)})_{\#}p_Z,
+p_\omega = (f^{(\omega)})_* p_Z.
 $$
 
-where the original map is recovered at the reference scale:
+The reference map satisfies
 
 $$
 f^{(1)} = f.
 $$
 
-This defines a family of flow maps
+This gives a family of flow maps
 
 $$
 \mathcal{F} = \{f^{(\omega)}\}_\omega.
 $$
 
-The main question of this project is:
+The central question of this project is:
 
-> **How does the geometry of the flow map change across the CFG family, and can these geometric changes explain mapping complexity?**
+> **How does the geometry of the flow map change across the CFG family, and can these changes explain mapping complexity?**
 
 ---
 
-## CFG-induced re-mapping
+## CFG-Induced Re-Mapping
 
-For a data point
+Take a data point
 
 $$
-x \sim p_X,
+x \sim p_X.
 $$
 
-invertibility of $f$ allows us to associate it with its latent variable
+Since $f$ is invertible, the latent variable that generates $x$ can be written as
 
 $$
 z = f^{-1}(x).
@@ -66,15 +66,15 @@ $$
 f^{(\omega)}(z).
 $$
 
-This defines the re-mapping
+This defines the CFG-induced re-mapping
 
 $$
 g_\omega(x)
 =
-f^{(\omega)}\left(f^{-1}(x)\right),
+f^{(\omega)}\left(f^{-1}(x)\right).
 $$
 
-or equivalently,
+Equivalently,
 
 $$
 g_\omega
@@ -92,13 +92,13 @@ f \circ f^{-1}
 I.
 $$
 
-Thus, $g_\omega$ describes how changing the guidance scale acts directly on samples from the original data distribution while preserving their underlying latent coordinates.
+Therefore, $g_\omega$ describes how changing the guidance scale acts on a sample from the original data distribution while keeping its underlying latent coordinate fixed.
 
 ---
 
-## Hypothesis: Contraction
+## Contraction Hypothesis
 
-One candidate explanation for reduced mapping complexity is that $g_\omega$ becomes contractive.
+One candidate explanation for reduced mapping complexity is that the induced re-mapping becomes contractive.
 
 For each data point $x$, consider the Jacobian
 
@@ -108,7 +108,7 @@ J_{g_\omega}(x)
 \nabla_x g_\omega(x).
 $$
 
-Its operator norm is
+Its operator norm is given by the largest singular value:
 
 $$
 \|J_{g_\omega}(x)\|_{\mathrm{op}}
@@ -116,7 +116,7 @@ $$
 \sigma_{\max}(J_{g_\omega}(x)).
 $$
 
-We measure the average local expansion/contraction over the data distribution using
+We measure the average local expansion or contraction over the data distribution using
 
 $$
 A(\omega)
@@ -127,17 +127,37 @@ A(\omega)
 \right].
 $$
 
-If $g_\omega$ is contractive, this may provide a geometric mechanism through which the corresponding map $f^{(\omega)}$ becomes simpler.
+If the Jacobian operator norm is smaller than one,
 
-The first goal of this repository is therefore to test whether this contraction behavior actually appears across the CFG family, rather than assuming it.
+$$
+\|\nabla_x g_\omega(x)\|_{\mathrm{op}} < 1,
+$$
+
+then the re-mapping is locally contractive at $x$.
+
+A possible mechanism is therefore
+
+$$
+\text{contraction of } g_\omega
+\quad \Longrightarrow \quad
+\text{reduced mapping complexity of } f^{(\omega)}.
+$$
+
+The first goal of this repository is to test whether this contraction behavior actually appears across the CFG family rather than assuming it.
 
 ---
 
-## Experiment 1: Contraction over the CFG Family
+## Experiment 1: Construct the Re-Mapping
 
-### 1. Construct the flow maps
+The first step is to construct the induced re-mapping
 
-For a small toy distribution, estimate the marginal velocity field directly.
+$$
+g_\omega
+=
+f^{(\omega)} \circ f^{-1}.
+$$
+
+For a small toy problem, the marginal velocity field can be estimated directly.
 
 Given a velocity field
 
@@ -147,64 +167,73 @@ $$
 v_t^{(\omega)}(x_t),
 $$
 
-numerically integrate the dynamics to construct the corresponding flow maps
+we numerically integrate the dynamics to estimate the corresponding flow map.
+
+For a general time pair, denote the flow map by
 
 $$
 f_{t,s}^{(\omega)}.
 $$
 
-For experiments involving arbitrary time pairs, instead of exhaustively enumerating every $s<t$, sample time pairs from a time distribution:
+Instead of exhaustively enumerating all possible time pairs satisfying $s<t$, time pairs can be sampled from a time distribution:
 
 $$
 s,t \sim p_T,
-\qquad s<t.
+\qquad
+s<t.
 $$
 
-### 2. Construct the re-mapping
-
-Using the numerically constructed flow maps, build
+Once the required flow maps have been estimated numerically, we construct
 
 $$
-g_\omega
+g_\omega(x)
 =
-f^{(\omega)} \circ f^{-1}.
+f^{(\omega)}\left(f^{-1}(x)\right).
 $$
 
-A basic sanity check is
+The first sanity check is
 
 $$
 g_1(x) \approx x.
 $$
 
-### 3. Differentiate the re-mapping
+---
 
-For each sample $x$, compute
+## Experiment 2: Measure the Geometry of the Re-Mapping
+
+After constructing $g_\omega$, differentiate it with respect to its input.
+
+For each sample $x_i$,
 
 $$
-J_{g_\omega}(x)
+J_i^{(\omega)}
 =
-\nabla_x g_\omega(x),
+\nabla_x g_\omega(x_i).
 $$
 
-and its largest singular value:
+Compute its operator norm:
 
 $$
-\sigma_{\max}(J_{g_\omega}(x))
+a_i^{(\omega)}
 =
-\|J_{g_\omega}(x)\|_{\mathrm{op}}.
+\|J_i^{(\omega)}\|_{\mathrm{op}}
+=
+\sigma_{\max}(J_i^{(\omega)}).
 $$
 
-Then estimate
+Then average over samples:
 
 $$
 A(\omega)
 \approx
 \frac{1}{N}
 \sum_{i=1}^{N}
-\|J_{g_\omega}(x_i)\|_{\mathrm{op}}.
+a_i^{(\omega)}.
 $$
 
-Importantly, the operator norm is computed for each sample before averaging:
+The order of these operations is important.
+
+We compute
 
 $$
 \mathbb{E}
@@ -224,38 +253,70 @@ $$
 \right\|_{\mathrm{op}}.
 $$
 
-### 4. Sweep the guidance scale
+The sample-wise operator norms should also be retained so that the full distribution, rather than only its mean, can be inspected.
 
-Evaluate the above quantity across guidance scales $\omega$.
+---
+
+## Experiment 3: Sweep the Guidance Scale
+
+Repeat the measurement across different values of the guidance scale $\omega$.
 
 The primary visualization is
 
 $$
 \omega
 \quad \text{vs.} \quad
+A(\omega),
+$$
+
+where
+
+$$
+A(\omega)
+=
 \mathbb{E}_{x \sim p_X}
 \left[
 \|\nabla_x g_\omega(x)\|_{\mathrm{op}}
 \right].
 $$
 
-Since $g_1 = I$, the reference point should satisfy
+Since
 
 $$
-A(1) \approx 1
+g_1 = I,
 $$
 
-up to numerical integration error.
+the reference scale provides a natural sanity check:
 
-The purpose of this experiment is to determine empirically whether increasing guidance produces contraction in the induced re-mapping $g_\omega$.
+$$
+A(1) \approx 1.
+$$
+
+The main empirical question is:
+
+> **As the guidance scale changes, does the induced re-mapping become more contractive?**
+
+This experiment does not assume that contraction must occur.
+
+A decreasing operator norm would provide evidence for average local contraction, whereas non-monotonic behavior or locally large singular values would indicate that contraction alone does not characterize the geometry of the CFG family.
 
 ---
 
-## Beyond Contraction
+## Flow-Map Family
 
-Contraction is only the first candidate geometric property.
+The broader object of interest is the family
 
-More generally, we would like to identify a property $P$ of the induced re-mapping such that
+$$
+\mathcal{F}
+=
+\{f^{(\omega)}\}_\omega.
+$$
+
+Varying $\omega$ allows us to study how the geometry of the corresponding maps changes across the family.
+
+Contraction is the first candidate property, but it need not be the final one.
+
+More generally, we seek a property $P$ of the induced re-mapping such that
 
 $$
 P(g_\omega)
@@ -263,44 +324,100 @@ P(g_\omega)
 \text{lower mapping complexity of } f^{(\omega)}.
 $$
 
-If contraction does not adequately explain the behavior of the CFG family, we will investigate alternative geometric proxies.
+If contraction does not explain the observed change in mapping complexity, the next question becomes:
 
-This leads to two broader questions:
+> **What other property of the induced re-mapping predicts lower mapping complexity?**
 
-1. How should we characterize the family
+---
 
-   $$
-   \mathcal{F} = \{f^{(\omega)}\}_\omega?
-   $$
+## Mapping Complexity
 
-2. Which measurable properties of $g_\omega$ are predictive of reduced mapping complexity?
+The next stage is to determine an appropriate proxy for the mapping complexity of the flow-map family.
 
-Understanding these relationships may provide a route toward the broader problem of identifying **optimal interpolations**: interpolations whose induced flow maps are easier to represent or learn.
+Conceptually, we want to study the relationship
+
+$$
+\omega
+\quad \longrightarrow \quad
+P(g_\omega)
+\quad \longrightarrow \quad
+\mathcal{C}(f^{(\omega)}),
+$$
+
+where $P(g_\omega)$ represents a measurable geometric property of the induced re-mapping and $\mathcal{C}$ represents a suitable notion of mapping complexity.
+
+The contraction experiment corresponds to the first candidate:
+
+$$
+P(g_\omega)
+=
+\mathbb{E}
+\left[
+\|\nabla g_\omega\|_{\mathrm{op}}
+\right].
+$$
+
+The appropriate definition or proxy for mapping complexity will be investigated separately.
+
+---
+
+## Connection to Optimal Interpolation
+
+A longer-term goal is to use these experiments to understand what makes an interpolation easy to represent or learn.
+
+The working research direction is
+
+$$
+\text{flow-map family}
+\quad \longrightarrow \quad
+\text{geometry of the induced re-mapping}
+\quad \longrightarrow \quad
+\text{mapping complexity}.
+$$
+
+If particular geometric properties consistently predict lower mapping complexity, they may provide a way to characterize or design better interpolations.
+
+This provides one possible approach to the broader question:
+
+> **What properties should an optimal interpolation have in order to induce simple, learnable flow maps?**
 
 ---
 
 ## Roadmap
 
-### Phase 1: Construct and measure the CFG re-mapping
+### Phase 1: Construct the Flow-Map Family
 
-- Define a low-dimensional toy distribution.
-- Estimate its marginal velocity field.
-- Numerically construct the flow maps.
-- Construct $g_\omega = f^{(\omega)} \circ f^{-1}$.
-- Differentiate $g_\omega$.
-- Compute sample-wise Jacobian operator norms.
-- Sweep $\omega$.
-- Plot operator-norm statistics against guidance scale.
-- Verify the $g_1 \approx I$ sanity check.
+- Define a low-dimensional toy problem.
+- Estimate the marginal velocity field.
+- Numerically integrate the velocity field.
+- Construct the required flow maps.
+- Construct the induced re-mapping.
+- Verify that the reference re-mapping is approximately the identity.
 
-### Phase 2: Mapping complexity
+### Phase 2: Measure Contraction
 
-Define and measure suitable proxies for the mapping complexity of $f^{(\omega)}$ across the family.
+- Differentiate the induced re-mapping.
+- Compute the Jacobian for each sample.
+- Compute the largest singular value for each Jacobian.
+- Average the sample-wise operator norms.
+- Retain the full distribution of singular values.
+- Sweep the guidance scale.
+- Plot operator-norm statistics against the guidance scale.
 
-### Phase 3: Geometry vs. complexity
+### Phase 3: Study Mapping Complexity
 
-Study whether contraction, or another property of $g_\omega$, predicts changes in mapping complexity across the family.
+- Select a suitable proxy for mapping complexity.
+- Measure mapping complexity across the flow-map family.
+- Compare changes in mapping complexity with changes in the geometry of the induced re-mapping.
 
-### Long-term direction: Optimal interpolation
+### Phase 4: Search Beyond Contraction
 
-Use the relationship between induced geometry and mapping complexity to investigate what properties make an interpolation easier to learn.
+If contraction does not explain mapping complexity:
+
+- Identify alternative geometric properties of the induced re-mapping.
+- Test whether these properties predict lower mapping complexity.
+- Compare candidate proxies across the flow-map family.
+
+### Long-Term Direction: Optimal Interpolation
+
+Use the relationship between flow-map geometry and mapping complexity to investigate what properties make an interpolation easier to learn.
