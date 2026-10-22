@@ -1,591 +1,1351 @@
-# Mapping Complexity over the CFG Family
+Understanding How Classifier-Free Guidance Changes Mapping Complexity
 
-A 2D toy study of how **classifier-free guidance (CFG)** changes flow-map geometry and mapping complexity.
+한국어: Classifier-Free Guidance가 Mapping Complexity를 어떻게 변화시키는가?
 
-**한국어:** CFG가 flow map의 geometry를 어떻게 변화시키고, 그 변화가 mapping complexity 감소와 어떻게 연결되는지를 분석하는 2D toy experiment 프로젝트입니다.
+This repository contains a sequence of controlled toy experiments studying how classifier-free guidance (CFG) changes the geometry and complexity of generative flow maps.
 
-The project started from a simple hypothesis:
+이 저장소는 Classifier-Free Guidance(CFG)가 생성 flow map의 기하 구조와 mapping complexity를 어떻게 변화시키는지 이해하기 위한 일련의 controlled toy experiments를 담고 있습니다.
+
+The central empirical observation is:
+
+Stronger CFG can produce a substantially lower-complexity mapping from latent noise to generated samples.
+
+핵심적으로 관찰한 현상은 다음과 같습니다.
+
+CFG를 강하게 적용할수록 latent noise에서 generated sample로 가는 mapping의 complexity가 크게 감소할 수 있습니다.
+
+The main question of this project is therefore:
+
+Why does this happen?
+
+따라서 이 프로젝트의 핵심 질문은 다음과 같습니다.
+
+왜 이런 현상이 발생하는가?
+
+Our experiments suggest that the answer is not simply that CFG contracts the mapping everywhere. Instead, mapping complexity is governed by a directional interaction between the geometry already accumulated by the flow and the local stretching/contraction induced by the velocity field.
+
+실험 결과, 이를 단순히 **“CFG가 mapping 전체를 contraction시키기 때문”**이라고 설명하기는 어렵습니다. 오히려 mapping complexity는 flow가 지금까지 축적한 mapping geometry와 현재 velocity field가 만들어내는 방향별 stretching/contraction 사이의 상호작용에 의해 결정됩니다.
+
+⸻
+
+1. Setup
+
+Flow map and mapping complexity
+
+Consider a deterministic flow
 
 $$
-\mathrm{CFG}
-\;\longrightarrow\;
-\mathrm{contraction}
-\;\longrightarrow\;
-\mathrm{lower\ mapping\ complexity}.
-$$
-
-The experiments show that contraction captures part of the phenomenon, but is not the full mechanism.
-
----
-
-## Main Question / 핵심 질문
-
-Consider a family of flow maps indexed by guidance scale $\omega$:
-
-$$
-\mathcal F=\{f^{(\omega)}\}_{\omega},
+\frac{dx_t}{dt}=v_t(x_t),
 \qquad
-p_\omega=(f^{(\omega)})_*p_Z.
+x_0=z,
 $$
 
-We measure mapping complexity by
+which defines a time-dependent map
 
 $$
-\boxed{
-\mathcal C(f^{(\omega)})
-=
-\mathbb E_z
-\left[
-\|\nabla f^{(\omega)}(z)\|_F^2
-\right].
-}
+f_t:z\mapsto x_t.
 $$
 
-The main question is:
-
-> **How does CFG change the geometry of the flow map, and what mechanism explains the resulting change in mapping complexity?**
-
-**한국어:** CFG scale이 변할 때 flow map의 geometry가 어떻게 달라지고, 그 변화가 mapping complexity 감소를 어떻게 설명하는지가 핵심 질문입니다.
-
-The toy problem uses **analytic marginal velocity fields**, allowing us to study the CFG effect without a neural velocity estimator.
-
-따라서 neural velocity estimation error와 분리하여 **CFG 자체가 만드는 flow-map geometry의 변화**를 관찰할 수 있습니다.
-
----
-
-## CFG-Induced Re-Mapping
-
-Using the conditional flow at $\omega=1$ as the reference,
+다음과 같은 deterministic flow를 생각합니다.
 
 $$
-f=f^{(1)},
-$$
-
-we define the CFG-induced re-mapping
-
-$$
-g_\omega
-=
-f^{(\omega)}\circ f^{-1}.
-$$
-
-Equivalently,
-
-$$
-g_\omega
-=
-f_{1,0}^{(\omega)}
-\circ
-f_{0,1}.
-$$
-
-At the reference scale,
-
-$$
-g_1=I.
-$$
-
-This lets us examine how changing CFG scale deforms reference samples while keeping their latent coordinates fixed.
-
-**한국어:** 동일한 latent coordinate를 유지하면서 CFG scale만 바꾸었을 때 reference data가 어떻게 재배치되는지를 $g_\omega$를 통해 관찰합니다.
-
----
-
-## Experimental Story / 실험 흐름
-
-### Exp1–2 — Does CFG Induce Contraction?
-
-We first measured the local operator norm
-
-$$
-\|\nabla g_\omega(x)\|_{\mathrm{op}}
-=
-\sigma_{\max}(\nabla g_\omega(x)).
-$$
-
-Exp1 showed **directional contraction**. After introducing anisotropic target covariances in Exp2, the sampled local operator norms became smaller than 1 for $\omega>1$.
-
-| $\omega$ | Mean operator norm | Sampled max |
-|---:|---:|---:|
-| 1.25 | 0.988229 | 0.999015 |
-| 1.50 | 0.982124 | 0.998091 |
-| 2.00 | 0.975253 | 0.996398 |
-| 3.00 | 0.968394 | 0.993514 |
-| 4.00 | 0.964710 | 0.991134 |
-
-**한국어:** CFG가 실제로 contraction을 만드는지 먼저 확인했습니다. Exp1에서는 directional contraction을 확인했고, Exp2의 anisotropic toy에서는 sampled local operator norm이 1보다 작아졌습니다.
-
-These are sampled local results, not a proof of global contraction over the entire space.
-
----
-
-### Exp3 — CFG Reduces Mapping Complexity
-
-We directly measured
-
-$$
-\mathcal C(f^{(\omega)})
-=
-\mathbb E_z
-\left[
-\|\nabla f^{(\omega)}(z)\|_F^2
-\right].
-$$
-
-| $\omega$ | Mapping complexity | Ratio to $\omega=1$ |
-|---:|---:|---:|
-| 1.00 | 1.250000 | 1.000000 |
-| 1.25 | 1.019685 | 0.815748 |
-| 1.50 | 0.895747 | 0.716597 |
-| 2.00 | 0.761131 | 0.608905 |
-| 3.00 | 0.637594 | 0.510075 |
-| 4.00 | 0.576776 | 0.461420 |
-
-Thus, in this analytic toy,
-
-$$
-\boxed{
-\text{increasing CFG scale substantially reduces mapping complexity.}
-}
-$$
-
-**한국어:** neural velocity estimator가 없는 analytic toy에서도 CFG scale이 증가하면서 mapping complexity가 크게 감소했습니다. 따라서 이 toy에서의 CFG 효과는 neural velocity estimation error만으로 설명되지 않습니다.
-
----
-
-### Exp4 — Global Contraction Is Not Necessary
-
-Let $F$ be the reference flow Jacobian and $G$ the CFG-induced re-mapping Jacobian. Then
-
-$$
-J_{f^{(\omega)}}=GF.
-$$
-
-The operator norm gives the bound
-
-$$
-\|GF\|_F^2
-\le
-\|G\|_{\mathrm{op}}^2
-\|F\|_F^2,
-$$
-
-but it ignores how reference Jacobian energy is distributed across directions.
-
-The exact pointwise change can instead be written as
-
-$$
-\boxed{
-\Delta
-=
-\operatorname{tr}
-\left[
-(G^\top G-I)M
-\right],
+\frac{dx_t}{dt}=v_t(x_t),
 \qquad
-M=FF^\top.
-}
+x_0=z.
 $$
 
-Exp4 found samples where one direction expanded while total Frobenius mapping complexity still decreased.
+이 flow는 latent variable $z$를 시간 $t$의 sample $x_t$로 보내는 mapping
 
-**한국어:** 모든 방향이 contraction되어야 complexity가 감소하는 것은 아닙니다. 어떤 방향에 기존 flow의 deformation energy가 얼마나 집중되어 있는지도 중요합니다.
+$$
+f_t:z\mapsto x_t
+$$
 
----
-
-## Exact Deformation Dynamics / 핵심 메커니즘
+을 정의합니다.
 
 Let
 
 $$
-\dot x_t=v_t(x_t),
+J_t=\nabla_z f_t(z)
 $$
 
-and define
+denote the Jacobian of this map.
+
+이 mapping의 Jacobian을
 
 $$
-J_t=\nabla_z f_t(z),
+J_t=\nabla_z f_t(z)
+$$
+
+라고 하겠습니다.
+
+We measure mapping complexity using the expected squared Frobenius norm
+
+$$
+\boxed{
+C_t
+
+\mathbb E_z|J_t|_F^2.
+}
+$$
+
+본 프로젝트에서는 mapping complexity를 다음과 같이 정의합니다.
+
+$$
+\boxed{
+C_t
+
+\mathbb E_z|J_t|_F^2.
+}
+$$
+
+At the final time,
+
+$$
+C(f)
+
+C_1
+
+\mathbb E_z|\nabla_z f(z)|_F^2.
+$$
+
+직관적으로 이 값은 latent input의 작은 변화가 output에서 얼마나 크게 증폭되는지를 측정합니다.
+
+* Large $C$: small latent perturbations can be strongly amplified.
+* Small $C$: the latent-to-data mapping is less sensitive.
+
+즉,
+
+* $C$가 크면: latent의 작은 변화가 output에서 크게 증폭될 수 있습니다.
+* $C$가 작으면: latent-to-data mapping이 상대적으로 덜 민감합니다.
+
+⸻
+
+2. Classifier-Free Guidance
+
+Throughout the experiments, CFG is defined as
+
+$$
+v_t^{(\omega)}
+
+v_t^{\mathrm{uncond}}
++
+\omega
+\left(
+v_t^{\mathrm{cond}}
+
+v_t^{\mathrm{uncond}}
+\right).
+$$
+
+실험에서 CFG velocity는 다음과 같이 정의합니다.
+
+$$
+v_t^{(\omega)}
+
+v_t^{\mathrm{uncond}}
++
+\omega
+\left(
+v_t^{\mathrm{cond}}
+
+v_t^{\mathrm{uncond}}
+\right).
+$$
+
+Our convention is:
+
+* $\omega=0$: unconditional flow
+* $\omega=1$: conditional/reference flow
+* $\omega>1$: classifier-free guidance
+
+즉,
+
+* $\omega=0$: unconditional flow
+* $\omega=1$: conditional/reference flow
+* $\omega>1$: CFG가 적용된 guided flow
+
+입니다.
+
+⸻
+
+3. Main Observation: CFG Reduces Mapping Complexity
+
+The first experiments directly measure
+
+$$
+C(f^{(\omega)})
+
+\mathbb E_z
+\left|
+\nabla_z f^{(\omega)}(z)
+\right|_F^2
+$$
+
+for different guidance strengths.
+
+첫 번째 실험에서는 guidance strength $\omega$를 변화시키면서
+
+$$
+C(f^{(\omega)})
+
+\mathbb E_z
+\left|
+\nabla_z f^{(\omega)}(z)
+\right|_F^2
+$$
+
+를 직접 측정합니다.
+
+The result is clear:
+
+Mapping complexity decreases substantially as guidance becomes stronger.
+
+결과는 상당히 명확합니다.
+
+Guidance가 강해질수록 mapping complexity가 크게 감소합니다.
+
+For example, in the main 2D toy problem,
+
+$$
+C(f^{(1)})\approx1.25,
 \qquad
-A_t=\nabla_xv_t(x_t).
+C(f^{(2)})\approx0.76.
 $$
 
-The flow Jacobian satisfies
+Therefore,
 
 $$
-\dot J_t=A_tJ_t.
+\boxed{
+C(f^{(2)})<C(f^{(1)}).
+}
 $$
+
+즉, CFG를 적용한 mapping이 reference conditional mapping보다 훨씬 낮은 complexity를 가질 수 있습니다.
+
+This motivates the main question:
+
+What geometric mechanism causes this reduction?
+
+여기서 본 프로젝트의 핵심 질문이 시작됩니다.
+
+어떤 geometric mechanism이 이 complexity reduction을 만들어내는가?
+
+⸻
+
+4. Is CFG Simply a Contraction?
+
+Let
+
+$$
+f=f^{(1)}
+$$
+
+denote the reference conditional map.
+
+다음으로 CFG가 단순히 기존 mapping을 contraction시키는 것인지 확인합니다.
+
+Reference map을
+
+$$
+f=f^{(1)}
+$$
+
+이라고 하고, guided map을
+
+$$
+f^{(\omega)}
+
+g_\omega\circ f
+$$
+
+로 표현할 수 있습니다.
+
+At the Jacobian level,
+
+$$
+J_{f^{(\omega)}}
+
+J_gJ_f.
+$$
+
+Therefore,
+
+$$
+|J_gJ_f|F^2
+\le
+|J_g|{\mathrm{op}}^2
+|J_f|_F^2.
+$$
+
+따라서
+
+$$
+|J_g|_{\mathrm{op}}<1
+$$
+
+이면 mapping complexity가 감소한다는 충분조건을 얻습니다.
+
+In other words,
+
+$$
+\boxed{
+|J_g|_{\mathrm{op}}<1
+}
+$$
+
+is sufficient for complexity reduction.
+
+하지만 중요한 질문은 이것입니다.
+
+이 조건이 반드시 필요한가?
+
+The answer is no.
+
+실험에서는 다음 두 조건을 동시에 만족하는 sample들을 실제로 발견합니다.
+
+$$
+\boxed{
+|J_g|_{\mathrm{op}}>1
+}
+$$
+
+while
+
+$$
+\boxed{
+\frac{
+|J_{f^{(\omega)}}|_F^2
+}{
+|J_f|_F^2
+}
+<1.
+}
+$$
+
+즉,
+
+어떤 방향은 오히려 expansion되고 있음에도 전체 mapping complexity는 감소할 수 있습니다.
+
+Therefore:
+
+Operator-norm contraction is sufficient, but not necessary, for mapping-complexity reduction.
+
+따라서 중요한 결론은 다음과 같습니다.
+
+Operator-norm contraction은 mapping-complexity reduction의 충분조건이지만 필요조건은 아닙니다.
+
+⸻
+
+5. Directional Geometry Explains the Difference
+
+Why can complexity decrease even when some direction expands?
+
+어떤 방향이 expansion되는데도 왜 전체 complexity는 감소할 수 있을까요?
+
+Consider the SVD
+
+$$
+J_g
+
+U
+\operatorname{diag}(\sigma_1,\sigma_2)
+V^\top.
+$$
+
+Define the directional reference-energy weights
+
+$$
+w_i
+
+\frac{
+|v_i^\top J_f|_2^2
+}{
+|J_f|_F^2
+}.
+$$
+
+그러면 normalized mapping complexity에 대해 다음의 exact identity를 얻습니다.
+
+$$
+\boxed{
+\frac{
+|J_gJ_f|_F^2
+}{
+|J_f|_F^2
+}
+
+\sum_i
+w_i\sigma_i^2.
+}
+$$
+
+This identity is crucial.
+
+이 식이 중요한 이유는 mapping complexity가 단순히 가장 큰 singular value만으로 결정되지 않는다는 것을 보여주기 때문입니다.
+
+The relevant question is not simply:
+
+“Does CFG expand or contract?”
+
+Instead, it is:
+
+Which directions does CFG expand or contract, and how much mapping energy is already stored in those directions?
+
+즉, 중요한 질문은
+
+“CFG가 contraction인가 expansion인가?”
+
+가 아니라,
+
+“CFG가 어느 방향을 얼마나 늘리고 줄이며, 기존 mapping의 energy가 그 방향에 얼마나 실려 있는가?”
+
+입니다.
+
+For example,
+
+* expansion in a low-weight direction may have little effect,
+* contraction in a high-weight direction may dominate the total complexity.
+
+예를 들어,
+
+* mapping energy가 거의 없는 방향에서 조금 expansion이 일어나고,
+* mapping energy가 많이 집중된 방향에서 강한 contraction이 일어난다면,
+
+전체 mapping complexity는 감소할 수 있습니다.
+
+This explains how
+
+$$
+|J_g|_{\mathrm{op}}>1
+$$
+
+can coexist with total complexity reduction.
+
+⸻
+
+6. Mapping Complexity Is Not Determined by Marginals Alone
+
+A natural alternative hypothesis is that mapping complexity might simply be determined by the distributions traversed by the flow.
+
+다음 질문은 mapping complexity가 단순히 flow가 지나가는 probability distribution에 의해 결정되는가 하는 것입니다.
+
+To test this, we construct different transport couplings that preserve the same marginal distributions.
+
+특히 Exp 5-B에서는 서로 다른 transport coupling을 만들면서도 모든 시간에서 동일한 marginal distribution
+
+$$
+p_t(x)
+$$
+
+을 유지하도록 구성합니다.
+
+Thus the flows have the same density evolution but different velocity couplings.
+
+즉,
+
+겉으로 보이는 distribution의 변화는 같지만, 실제 particle들이 이동하는 방식은 다릅니다.
+
+Despite identical marginals, the final mapping complexities differ.
+
+실험 결과, 동일한 marginal path를 가지고 있음에도 final mapping complexity는 달라집니다.
+
+Therefore,
+
+$$
+\boxed{
+\text{same marginal path}
+;\not\Rightarrow;
+\text{same mapping complexity}.
+}
+$$
+
+즉,
+
+$$
+\boxed{
+\text{같은 }p_t
+;\not\Rightarrow;
+\text{같은 mapping complexity}.
+}
+$$
+
+Mapping complexity is therefore not merely a property of the density path.
+
+It also depends on how probability mass is transported through that path.
+
+즉, mapping complexity는 단순히 distribution 자체의 특성이 아니라,
+
+그 distribution을 어떤 velocity field와 coupling을 이용하여 transport했는가
+
+에도 의존합니다.
+
+⸻
+
+7. From Final Geometry to Dynamics
+
+The previous experiments analyze the final map.
+
+이전 실험들은 주로 최종 mapping $f_1$의 geometry를 분석했습니다.
+
+The next question is:
+
+When during the flow is complexity created or destroyed?
+
+이제 질문을 시간 방향으로 확장합니다.
+
+Flow의 어느 시점에서 mapping complexity가 만들어지고, 어느 시점에서 감소하는가?
 
 Define
 
 $$
-S_t
-=
-\frac{A_t+A_t^\top}{2}
+M_t
+
+J_tJ_t^\top.
 $$
 
-and the accumulated deformation matrix
+Then
 
 $$
-M_t=J_tJ_t^\top.
+C_t
+
+\mathbb E[
+\operatorname{tr}(M_t)
+].
 $$
 
 Since
 
 $$
-\|J_t\|_F^2=\operatorname{tr}(M_t),
+\dot J_t
+
+A_tJ_t,
+\qquad
+A_t
+
+\nabla_xv_t(x_t),
 $$
 
-the exact mapping-complexity dynamics are
+we have
+
+$$
+\dot M_t
+
+A_tM_t
++
+M_tA_t^\top.
+$$
+
+Now define the symmetric velocity strain
+
+$$
+S_t
+
+\frac12
+\left(
+A_t+A_t^\top
+\right).
+$$
+
+그러면 mapping complexity의 시간 미분에 대해 다음 exact identity를 얻습니다.
+
+$$
+\boxed{
+\frac{dC_t}{dt}
+
+2\mathbb E[
+\operatorname{tr}(S_tM_t)
+].
+}
+$$
+
+This is the central dynamical identity of the project.
+
+이 식은 전체 프로젝트에서 가장 중요한 dynamical identity 중 하나입니다.
+
+⸻
+
+8. What Do $M_t$ and $S_t$ Mean?
+
+The two matrices have very different roles.
+
+두 matrix는 서로 다른 역할을 합니다.
+
+$M_t$: accumulated mapping geometry
+
+$$
+M_t=J_tJ_t^\top
+$$
+
+describes how mapping sensitivity has accumulated through the flow up to time $t$.
+
+즉, $M_t$는
+
+현재 시점까지 flow가 쌓아온 mapping geometry
+
+를 나타냅니다.
+
+⸻
+
+$S_t$: instantaneous deformation
+
+$$
+S_t
+
+\frac12
+\left(
+\nabla v_t+\nabla v_t^\top
+\right)
+$$
+
+describes the instantaneous stretching/contraction induced by the velocity field.
+
+즉, $S_t$는
+
+현재 velocity field가 공간을 순간적으로 어느 방향으로 늘리고 줄이는지
+
+를 나타냅니다.
+
+Therefore,
+
+$$
+\operatorname{tr}(S_tM_t)
+$$
+
+measures the interaction between
+
+1. geometry already accumulated by the map, and
+2. deformation currently imposed by the velocity field.
+
+따라서
+
+$$
+\operatorname{tr}(S_tM_t)
+$$
+
+는
+
+지금까지 만들어진 mapping geometry와 현재 velocity strain 사이의 alignment
+
+를 측정한다고 볼 수 있습니다.
+
+⸻
+
+9. Directional Decomposition of the Complexity Rate
+
+Diagonalize
+
+$$
+M_t
+
+m_1u_1u_1^\top
++
+m_2u_2u_2^\top,
+\qquad
+m_1\ge m_2.
+$$
+
+여기서 $m_i$는 각 방향에 얼마나 많은 mapping energy가 쌓여 있는지를 나타냅니다.
+
+Define
+
+$$
+r_i
+
+u_i^\top S_tu_i.
+$$
+
+$r_i$는 해당 mapping direction에서 현재 velocity field가 만드는 instantaneous stretching/contraction rate입니다.
+
+Then
 
 $$
 \boxed{
 \dot C_t
-=
-2\mathbb E_z
-\left[
-\operatorname{tr}(S_tM_t)
-\right].
+
+2\mathbb E[m_1r_1]
++
+2\mathbb E[m_2r_2].
 }
 $$
 
-Equivalently,
+Define
+
+$$
+q_i(t)
+
+2\mathbb E[m_ir_i].
+$$
+
+Then
 
 $$
 \boxed{
-C_1
-=
-d+
-2\int_0^1
-\mathbb E_z
-\left[
-\operatorname{tr}(S_tM_t)
-\right]dt.
+\dot C_t=q_1(t)+q_2(t).
 }
 $$
 
-This is an **exact identity**, not a proxy.
-
-- $S_t$: instantaneous signed stretching induced by the velocity field.
-- $M_t$: deformation geometry accumulated by the flow up to time $t$.
-
-**한국어:** mapping complexity는 현재 velocity gradient의 크기만으로 결정되지 않습니다. 현재의 **signed stretching** $S_t$와 지금까지 누적된 **deformation geometry** $M_t$의 상호작용에 의해 변화합니다.
-
----
-
-## Exp5 — Boundary Tests
-
-Exp5 tested which information is actually sufficient to characterize final mapping complexity.
-
-### Exp5-A — Rotating Gaussian Path
-
-Different intermediate covariance rotations produced the same final complexity:
+Each contribution has a very intuitive form:
 
 $$
-C_1=4.25.
+\underbrace{m_i}{\text{how much energy is there}}
+\times
+\underbrace{r_i}{\text{what the velocity does to it}}.
 $$
 
-In this linear-Gaussian family,
+즉,
 
 $$
-J_1J_1^\top=\Sigma_1,
+\underbrace{m_i}{\text{그 방향에 energy가 얼마나 있는가}}
+\times
+\underbrace{r_i}{\text{그 방향을 지금 늘리는가 줄이는가}}
 $$
 
-so the endpoint covariance fixes the final Frobenius complexity.
+가 실제 complexity 변화량을 결정합니다.
 
-**한국어:** 이 결과는 rotation이 중요하지 않다는 일반적인 결론이 아니라, 해당 linear-Gaussian family가 구조적으로 final Frobenius complexity의 path dependence를 보여주기 어렵다는 것을 의미합니다.
+This is the dynamical version of the directional weighting observed in the endpoint experiments.
 
-### Exp5-B — Same Marginals, Different Transport
+⸻
 
-We constructed different transport couplings with exactly the same marginal probability path $p_t$.
+10. Complexity Is Not Monotonic Along the Flow
 
-Gauss-Hermite population calculations gave
+For CFG with $\omega=2$, mapping complexity does not simply decrease throughout the entire trajectory.
 
-$$
-C_1(\beta=0)
-\approx0.77461145,
-$$
+$\omega=2$의 CFG flow를 시간에 따라 추적하면 매우 흥미로운 현상이 나타납니다.
 
-$$
-C_1(\beta=60^\circ)
-\approx0.77553262.
-$$
-
-Thus,
+Initially,
 
 $$
-\boxed{
-\text{the marginal probability path }p_t
-\text{ does not uniquely determine final mapping complexity.}
-}
+C_0=2.
 $$
 
-### Exp5-C — Low-Information Velocity Statistics
-
-Simple velocity summaries such as
+The complexity decreases strongly, reaches a minimum around
 
 $$
-2\int_0^1
-\mathbb E[\operatorname{tr}(S_t)]dt
+t\approx0.66,
 $$
 
-did not reliably reproduce the ordering of true mapping complexity.
+and then increases again.
 
-The deformation weighting $M_t$ cannot generally be discarded.
+즉,
 
-### Exp5-D — Different Probability Paths
+$$
+C_t:
+\qquad
+2
+\rightarrow
+0.50
+\rightarrow
+0.76
+$$
 
-A genuinely different interpolation family was also tested. Although the intermediate marginal distributions changed, the final population complexity remained essentially invariant in the tested family.
+정도의 형태를 보입니다.
 
-**한국어:** Exp5 전체를 통해 endpoint, marginal path, 또는 단순한 instantaneous velocity statistic만으로 final mapping complexity를 일반적으로 설명하기 어렵다는 경계를 확인했습니다.
+Therefore, the final low-complexity mapping is not created by continuous contraction throughout the entire flow.
 
----
+즉, 최종 complexity가 낮다고 해서 flow가 처음부터 끝까지 계속 contraction했다는 뜻은 아닙니다.
 
-## Exp6 — Direct CFG Mechanism Test
+Instead,
 
-Finally, we directly compared the baseline flow at
+* before the minimum:
+
+$$
+\dot C_t<0,
+$$
+
+* near the minimum:
+
+$$
+\dot C_t\approx0,
+$$
+
+* after the minimum:
+
+$$
+\dot C_t>0.
+$$
+
+따라서 최종 complexity는 시간에 따른 contraction과 expansion의 누적 결과입니다.
+
+⸻
+
+11. Direct Comparison: $\omega=1$ vs $\omega=2$
+
+To isolate the effect of CFG itself, we directly compare the conditional flow
 
 $$
 \omega=1
-\qquad\text{and}\qquad
+$$
+
+with the guided flow
+
+$$
 \omega=2.
 $$
 
-Define the exact instantaneous complexity rate
+CFG 자체가 무엇을 바꾸는지 보기 위해 동일한 latent samples를 사용하여 두 flow를 직접 비교합니다.
+
+Define
 
 $$
 R_t^{(\omega)}
-=
-2\mathbb E
-\left[
+
+2\mathbb E[
 \operatorname{tr}
-\left(
-S_t^{(\omega)}M_t^{(\omega)}
-\right)
-\right].
+(
+S_t^{(\omega)}
+M_t^{(\omega)}
+)
+].
 $$
 
-The final complexities are
+Then
 
 $$
-C_1^{(1)}=1.25,
-\qquad
-C_1^{(2)}\approx0.761131.
+\frac{dC_t^{(\omega)}}{dt}
+
+R_t^{(\omega)}.
+$$
+
+Now define
+
+$$
+\Delta C_t
+
+C_t^{(2)}
+
+C_t^{(1)}
+$$
+
+and
+
+$$
+\Delta R_t
+
+R_t^{(2)}
+
+R_t^{(1)}.
+$$
+
+Since both flows begin with
+
+$$
+J_0=I,
+$$
+
+we have
+
+$$
+\Delta C_0=0.
 $$
 
 Therefore,
 
 $$
+\boxed{
+\Delta C_t
+
+\int_0^t
+\Delta R_s,ds.
+}
+$$
+
+실험에서도 직접 계산한
+
+$$
+C_t^{(2)}-C_t^{(1)}
+$$
+
+과
+
+$$
+\int_0^t\Delta R_s,ds
+$$
+
+가 거의 완벽하게 겹칩니다.
+
+즉, CFG가 최종 mapping complexity를 얼마나 바꾸었는지를 시간별 complexity-rate 차이의 누적으로 정확하게 설명할 수 있습니다.
+
+⸻
+
+12. Where Does the CFG Reduction Come From?
+
+The CFG-induced rate difference reveals several phases.
+
+CFG가 complexity를 감소시키는 과정은 시간 전체에서 동일하지 않습니다.
+
+Early phase
+
+Initially,
+
+$$
+\Delta R_t<0.
+$$
+
+CFG decreases mapping complexity substantially faster than the $\omega=1$ conditional flow.
+
+초기에는 CFG가 reference flow보다 훨씬 강하게 complexity를 감소시킵니다.
+
+이 구간에서는 두 directional contribution이 모두 negative인 영역도 나타납니다.
+
+⸻
+
+Middle phase
+
+Later, the two directional contributions begin to oppose each other.
+
+예를 들어 중간 구간에서는 대략
+
+$$
+\Delta q_1<0,
+\qquad
+\Delta q_2>0
+$$
+
+와 같은 형태가 나타납니다.
+
+즉,
+
+한 방향에서는 CFG가 complexity를 더 감소시키지만, 다른 방향에서는 오히려 그 효과를 상쇄합니다.
+
+The two effects partially cancel, and therefore
+
+$$
+\Delta R_t
+$$
+
+can approach or briefly cross zero.
+
+따라서 CFG가 모든 순간에서 reference보다 complexity를 더 빠르게 감소시키는 것은 아닙니다.
+
+⸻
+
+Late phase
+
+Toward the end,
+
+$$
+\Delta R_t<0
+$$
+
+again.
+
+후반부에서는 다시 CFG 쪽이 더 낮은 complexity rate를 가지며, 이 효과가 최종 complexity gap을 더욱 크게 만듭니다.
+
+The accumulated result is approximately
+
+$$
+C_1^{(2)}
+
+C_1^{(1)}
+\approx
+-0.49.
+$$
+
+즉, 최종적으로 CFG mapping은 reference mapping보다 상당히 낮은 complexity를 갖습니다.
+
+⸻
+
+13. Overall Mechanism
+
+The experimental story can be summarized as
+
+$$
+\boxed{
+\text{CFG strength}
+}
+$$
+
+$$
+\downarrow
+$$
+
+$$
+\boxed{
+\text{changes the velocity field}
+}
+$$
+
+$$
+\downarrow
+$$
+
+$$
+\boxed{
+\text{changes directional stretching / contraction}
+}
+$$
+
+$$
+\downarrow
+$$
+
+$$
+\boxed{
+\text{interacts with accumulated mapping geometry}
+}
+$$
+
+through
+
+$$
+\boxed{
+\dot C_t
+
+2\mathbb E[
+\operatorname{tr}(S_tM_t)
+]
+}
+$$
+
+$$
+\downarrow
+$$
+
+$$
+\boxed{
+\text{effects accumulate over time}
+}
+$$
+
+$$
+\downarrow
+$$
+
+$$
+\boxed{
+C_1^{(\mathrm{CFG})}
+<
+C_1^{(\mathrm{reference})}.
+}
+$$
+
+쉽게 말하면 다음과 같습니다.
+
+CFG가 velocity field를 바꾼다.
+
+바뀐 velocity field가 공간을 방향별로 다르게 늘리고 줄인다.
+
+그 효과가 지금까지 flow가 만들어 놓은 mapping geometry와 상호작용한다.
+
+이 효과가 시간에 따라 누적된다.
+
+그 결과 최종 CFG mapping의 complexity가 낮아진다.
+
+⸻
+
+14. Main Takeaway
+
+A simple explanation would be:
+
+“CFG makes the mapping more contractive.”
+
+가장 단순한 설명은 다음과 같을 수 있습니다.
+
+“CFG가 mapping을 더 contraction시킨다.”
+
+However, the experiments suggest a more precise picture.
+
+하지만 실험 결과는 이것보다 조금 더 정교한 mechanism을 보여줍니다.
+
+CFG changes the directional deformation of the velocity field. These deformations interact with the geometry accumulated by the latent-to-data mapping, and their effects integrate over time to produce a lower-complexity final map.
+
+즉,
+
+CFG는 velocity field의 방향별 deformation을 변화시킵니다. 이 deformation은 latent-to-data mapping이 이미 축적한 geometry와 상호작용하며, 그 효과가 시간에 따라 누적되어 최종적으로 더 낮은 mapping complexity를 만들어냅니다.
+
+The recurring theme across all experiments is therefore not simply contraction, but directional alignment.
+
+따라서 전체 실험을 관통하는 핵심 키워드는 단순한 contraction보다는
+
+directional alignment
+
+입니다.
+
+⸻
+
+15. Experimental Roadmap
+
+Exp 3 — CFG and Final Mapping Complexity
+
+Measure
+
+$$
+\mathbb E
+|
+\nabla f^{(\omega)}
+|_F^2
+$$
+
+across different guidance strengths.
+
+Guidance strength에 따라 최종 mapping complexity가 어떻게 변화하는지 측정합니다.
+
+Main result
+
+Mapping complexity decreases substantially with stronger guidance.
+
+하지만 operator-norm contraction만으로 전체 현상을 설명할 수는 없습니다.
+
+⸻
+
+Exp 4 — Directional Contraction vs Expansion
+
+Study the remapping
+
+$$
+f^{(\omega)}
+
+g_\omega\circ f^{(1)}.
+$$
+
+Sample-wise experiments show that
+
+$$
+|J_g|_{\mathrm{op}}>1
+$$
+
+can coexist with
+
+$$
+|J_{f^{(\omega)}}|_F^2
+<
+|J_f|_F^2.
+$$
+
+Main result
+
+Operator-norm contraction is sufficient but not necessary for complexity reduction.
+
+방향별 geometry와 energy weighting이 중요합니다.
+
+⸻
+
+Pre-Exp 5 — Complexity Dynamics
+
+Track
+
+$$
+C_t,
+\qquad
+M_t,
+\qquad
+S_t
+$$
+
+throughout the flow.
+
+Verify
+
+$$
+\boxed{
+\dot C_t
+
+2E[\operatorname{tr}(S_tM_t)]
+
+q_1+q_2.
+}
+$$
+
+Main result
+
+Mapping complexity는 시간에 따라 단조롭게 감소하지 않습니다.
+
+Directional contraction과 expansion 사이의 경쟁으로 complexity dynamics가 결정됩니다.
+
+⸻
+
+Exp 5-A — Gaussian Interpolation Control
+
+Construct Gaussian interpolation paths with identical endpoints but different intermediate rotation geometries.
+
+같은 Gaussian endpoint를 유지하면서 interpolation geometry만 변화시키는 control experiment입니다.
+
+Main result
+
+단순한 endpoint 정보만으로 transport geometry를 결정할 수 없음을 확인합니다.
+
+⸻
+
+Exp 5-B — Same Marginals, Different Velocity Couplings
+
+Construct flows with identical
+
+$$
+p_t(x)
+$$
+
+for every time $t$, but different velocity couplings.
+
+모든 시간에서 동일한 marginal distribution을 유지하면서 transport coupling만 변화시킵니다.
+
+Main result
+
+$$
+\boxed{
+\text{same }p_t
+\not\Rightarrow
+\text{same mapping complexity}.
+}
+$$
+
+따라서 mapping complexity는 density path만의 특성이 아니라 transport coupling의 특성이기도 합니다.
+
+⸻
+
+Exp 6 — CFG Mechanism
+
+Directly compare
+
+$$
+\omega=1
+\qquad\text{vs}\qquad
+\omega=2.
+$$
+
+Verify
+
+$$
+\boxed{
+C_t^{(2)}-C_t^{(1)}
+
+\int_0^t
+\left(
+R_s^{(2)}
+
+R_s^{(1)}
+\right)ds.
+}
+$$
+
+Then decompose the rate difference into directional contributions.
+
+Main result
+
+The final CFG complexity reduction is a
+
+temporally accumulated and directionally heterogeneous effect.
+
+즉, CFG의 최종 complexity reduction은
+
+시간에 따라 누적되며, 방향마다 서로 다른 deformation이 결합되어 만들어지는 효과
+
+입니다.
+
+⸻
+
+16. Key Findings
+
+The main findings of this repository are:
+
+1. Stronger CFG reduces final mapping complexity in the toy experiments.
+    Toy experiment에서 CFG가 강해질수록 final mapping complexity가 감소합니다.
+2. Uniform operator-norm contraction is sufficient but not necessary.
+    전체 방향에서 contraction일 필요는 없습니다.
+3. Expansion and total complexity reduction can coexist.
+    일부 방향의 expansion과 전체 complexity reduction이 동시에 존재할 수 있습니다.
+4. Mapping complexity depends on transport coupling, not only on marginal distributions.
+    Mapping complexity는 marginal distribution뿐 아니라 transport coupling에도 의존합니다.
+5. Mapping complexity can decrease and later increase along the same trajectory.
+    하나의 flow 안에서도 complexity가 감소한 뒤 다시 증가할 수 있습니다.
+6. The exact instantaneous complexity rate is
+
+$$
+\boxed{
+\dot C_t
+
+2\mathbb E[
+\operatorname{tr}(S_tM_t)
+].
+}
+$$
+
+7. The final CFG effect is the accumulated difference in complexity rates
+
+$$
+\boxed{
 C_1^{(2)}-C_1^{(1)}
-\approx-0.488869.
-$$
 
-The integrated difference in exact rates is
-
-$$
 \int_0^1
 \left(
 R_t^{(2)}-R_t^{(1)}
-\right)dt
-\approx-0.488857,
-$$
-
-matching the observed final complexity difference up to numerical integration error.
-
-Therefore,
-
-$$
-\boxed{
-C_1^{(2)}-C_1^{(1)}
-=
-\int_0^1
-2\mathbb E
-\left[
-\operatorname{tr}
-\left(
-S_t^{(2)}M_t^{(2)}
--
-S_t^{(1)}M_t^{(1)}
-\right)
-\right]dt.
+\right)dt.
 }
 $$
 
-### What Does CFG Actually Change?
+⸻
 
-CFG is **not** more complexity-decreasing at every instant.
+17. Scope and Limitations
 
-Instead, the baseline toy shows
+These experiments use deliberately simple low-dimensional toy distributions.
 
-$$
-\boxed{
-\text{stronger early complexity decrease}
-+
-\text{delayed/weaker late re-expansion}.
-}
-$$
+본 프로젝트의 실험들은 mechanism을 명확하게 분리해서 관찰하기 위해 의도적으로 저차원 toy distribution을 사용합니다.
 
-**한국어:** CFG는 모든 시간에서 더 강한 contraction을 만드는 것이 아닙니다. 초기에는 complexity를 더 강하게 감소시키고, 이후 re-expansion을 늦추고 약화시킵니다. 이 전체 deformation history의 차이가 최종 mapping complexity 차이를 만듭니다.
+Therefore, these experiments should not be interpreted as evidence that exactly the same quantitative behavior must occur in large-scale diffusion or flow models.
 
----
+따라서 여기서 관찰한 정량적 결과가 실제 고차원 diffusion model이나 large-scale generative model에서도 그대로 나타난다고 주장하지는 않습니다.
 
-## Main Figures / 주요 결과
+Instead, the purpose of this repository is:
 
-### Complexity Dynamics
+to develop and test a geometric language for understanding how guidance can change the complexity of generative mappings.
 
-![CFG complexity comparison](results/figures/exp06_complexity_comparison.png)
+즉, 이 저장소의 목적은
 
-### Exact Complexity Rate
+guidance가 generative mapping의 complexity를 변화시키는 mechanism을 이해하기 위한 geometric language를 만들고, 이를 controlled setting에서 검증하는 것
 
-![CFG rate comparison](results/figures/exp06_rate_comparison.png)
+입니다.
 
-### CFG-Induced Rate Difference
+Whether the same directional mechanisms explain CFG behavior in large-scale generative models remains an open question.
 
-![CFG rate difference](results/figures/exp06_cfg_rate_difference.png)
+이러한 directional geometry / accumulated strain mechanism이 실제 large-scale generative model에서도 CFG를 설명할 수 있는지는 앞으로 확인해야 할 중요한 질문입니다.
 
-### Accumulated CFG Effect
+⸻
 
-![Accumulated CFG effect](results/figures/exp06_accumulated_cfg_effect.png)
+TL;DR
 
----
+English
 
-## Main Takeaways / 핵심 결과
+CFG does more than simply contract a generative mapping.
 
-1. **CFG reduces mapping complexity in the analytic toy.**
-   CFG는 neural velocity estimation error가 없는 toy에서도 mapping complexity를 감소시킵니다.
+Our toy experiments suggest that CFG modifies the directional strain of the velocity field, which interacts with the mapping geometry accumulated over time.
 
-2. **Uniform/global contraction is not the full mechanism.**
-   모든 방향의 contraction은 complexity 감소를 설명하기 위한 필수조건이 아닙니다.
-
-3. **Deformation history matters.**
-   Complexity evolution depends on the interaction between $S_t$ and $M_t$.
-
-4. **A single dominant direction is insufficient.**
-   하나의 deformation direction만으로 전체 complexity 변화를 설명할 수 없습니다.
-
-5. **Marginal probability paths do not uniquely determine mapping complexity.**
-   같은 $p_t$에서도 transport coupling이 달라지면 다른 flow-map complexity가 나타날 수 있습니다.
-
----
-
-## Repository Structure
-
-```text
-cfg-flow-complexity/
-├── experiments/
-│   ├── exp01_contraction.py
-│   ├── exp02_contraction.py
-│   ├── exp03_*.py
-│   ├── exp04_*.py
-│   ├── exp05_pre_*.py
-│   ├── exp05a_rotating_gaussian.py
-│   ├── exp05b_*.py
-│   ├── exp05c_low_information.py
-│   ├── exp05d_interpolation_family.py
-│   └── exp06_cfg_mechanism.py
-│
-├── src/
-│   ├── distributions.py
-│   ├── velocity.py
-│   ├── flow.py
-│   └── remapping.py
-│
-├── results/
-│   ├── figures/
-│   └── *.npz
-│
-└── README.md
-```
-
----
-
-## Running the Experiments / 실행 방법
-
-Activate the environment:
-
-```bash
-source .venv/bin/activate
-```
-
-Run experiments from the repository root:
-
-```bash
-python -m experiments.exp01_contraction
-python -m experiments.exp02_contraction
-
-python -m experiments.exp03_mapping_complexity
-python -m experiments.exp03_contraction_bound
-python -m experiments.exp03_directional_decomposition
-
-python -m experiments.exp04_decoupling
-python -m experiments.exp04_directional_diagnostic
-
-python -m experiments.exp05_pre_mt_dynamics
-python -m experiments.exp05_pre_directional_contributions
-
-python -m experiments.exp05a_rotating_gaussian
-
-python -m experiments.exp05b_velocity_coupling
-python -m experiments.exp05b_convergence
-python -m experiments.exp05b_quadrature
-
-python -m experiments.exp05c_low_information
-python -m experiments.exp05d_interpolation_family
-
-python -m experiments.exp06_cfg_mechanism
-```
-
-Generated numerical results and figures are stored under `results/`.
-
----
-
-## Scope / 해석 범위
-
-This repository is an **exploratory mechanism study**.
-
-It does **not** establish that:
-
-- CFG globally contracts arbitrary flow maps;
-- CFG is more contractive at every time;
-- rotation itself causes complexity reduction;
-- one dominant direction explains the full effect;
-- transport is universally more important than the probability path;
-- lower Jacobian complexity guarantees lower neural-network approximation error;
-- the same mechanism automatically generalizes to high-dimensional generative models.
-
-**한국어:** 현재 결과는 CFG가 왜 neural network 관점에서 더 learnable한 map을 만드는지까지 증명한 것이 아닙니다. 여기서는 **CFG가 exact toy flow의 mapping geometry를 어떻게 변화시키는지**를 분석합니다.
-
----
-
-## Conclusion / 결론
-
-The initial hypothesis was
-
-$$
-\mathrm{CFG}
-\rightarrow
-\mathrm{contraction}
-\rightarrow
-\mathrm{lower\ mapping\ complexity}.
-$$
-
-The experiments suggest a more precise picture:
+The key identity is
 
 $$
 \boxed{
-\mathrm{CFG}
-\rightarrow
-\text{changes in }S_t\text{ and }M_t
-\rightarrow
-\text{different deformation history}
-\rightarrow
-\mathrm{lower\ final\ mapping\ complexity}.
+\dot C_t
+
+2\mathbb E[
+\operatorname{tr}(S_tM_t)
+].
 }
 $$
 
-> **EN:** In this analytic 2D toy, CFG lowers mapping complexity not through uniform contraction, but through a time-dependent interaction between instantaneous signed stretching and accumulated deformation geometry.
+The final reduction in mapping complexity is therefore best understood as a directional, time-accumulated geometric effect.
 
-> **KR:** 이 analytic 2D toy에서 CFG의 mapping complexity 감소는 단순한 uniform contraction보다는 **순간적인 signed stretching과 누적된 deformation geometry의 시간적 상호작용**으로 설명됩니다.
+⸻
 
----
+한국어
 
-**Status:** Core exploratory experiments completed through **Exp6**.
+CFG는 단순히 generative mapping 전체를 contraction시키는 것만은 아닙니다.
+
+Toy experiment에서 CFG는 velocity field의 방향별 strain을 변화시키고, 이 strain은 flow가 시간에 따라 축적해 온 mapping geometry와 상호작용합니다.
+
+이를 나타내는 핵심 식은
+
+$$
+\boxed{
+\dot C_t
+
+2\mathbb E[
+\operatorname{tr}(S_tM_t)
+].
+}
+$$
+
+입니다.
+
+따라서 CFG에 의한 최종 mapping complexity 감소는 단순한 uniform contraction보다는
+
+방향별 deformation과 기존 mapping geometry의 상호작용이 시간에 따라 누적된 결과
+
+로 이해하는 것이 더 적절합니다.
