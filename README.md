@@ -15,16 +15,16 @@ This repository studies that question in an analytic 2D toy setting.
 
 핵심적인 complexity dynamics는 다음과 같다.
 
-$$
+```math
 \frac{d}{dt}\mathcal{C}_t
 =
-2\,\mathbb{E}
+2\,\mathrm{E}
 \left[
 \mathrm{tr}(S_tM_t)
 \right],
 \qquad
 M_t=J_tJ_t^\top
-$$
+```
 
 ---
 
@@ -68,11 +68,11 @@ Exp 6   실제 CFG의 complexity 감소를 deformation dynamics로 설명할 수
 
 CFG flow와 unguided flow 사이의 data-to-data re-mapping을 다음과 같이 두었다.
 
-$$
+```math
 g_\omega
 =
 f^{(\omega)}\circ f^{-1}
-$$
+```
 
 **Finding.** 한 방향에서는 contraction이 나타났지만, 다른 방향이 identity로 남아 있어 operator norm은 1이었다.
 
@@ -100,16 +100,16 @@ Class covariance를 anisotropic하게 바꾸어 Exp 1에서 남아 있던 identi
 
 Mapping complexity를 다음과 같이 측정했다.
 
-$$
+```math
 \mathcal{C}(f^{(\omega)})
 =
-\mathbb{E}_z
+\mathrm{E}_z
 \left[
 \left\|
 \nabla f^{(\omega)}(z)
 \right\|_F^2
 \right]
-$$
+```
 
 | CFG scale $\omega$ | Mapping complexity |
 |---:|---:|
@@ -127,12 +127,12 @@ $$
 
 Exp 1–2의 contraction과 Exp 3의 complexity reduction을 연결하면 다음 upper bound를 생각할 수 있다.
 
-$$
+```math
 \|GF\|_F^2
 \le
 \|G\|_{\mathrm{op}}^2
 \|F\|_F^2
-$$
+```
 
 이 bound 자체는 맞지만 실제 감소를 설명하기에는 상당히 loose했다.
 
@@ -176,19 +176,19 @@ Mean-level에서 미리 정의한 강한 decoupling criterion은 성립하지 �
 
 Flow trajectory가
 
-$$
+```math
 \frac{dx_t}{dt}
 =
 v_t(x_t)
-$$
+```
 
 를 따른다면, flow Jacobian $J_t$는
 
-$$
+```math
 \frac{dJ_t}{dt}
 =
 \nabla_x v_t(x_t)J_t
-$$
+```
 
 를 따른다.
 
@@ -196,45 +196,45 @@ $$
 
 Velocity Jacobian의 symmetric part를
 
-$$
+```math
 S_t
 =
 \frac{
 \nabla v_t+\nabla v_t^\top
 }{2}
-$$
+```
 
 라고 하면,
 
-$$
+```math
 \frac{d}{dt}\|J_t\|_F^2
 =
 2\,\mathrm{tr}
 \left(
 S_tJ_tJ_t^\top
 \right)
-$$
+```
 
 를 얻는다.
 
 여기서
 
-$$
+```math
 M_t
 =
 J_tJ_t^\top
-$$
+```
 
 라고 두면 population-level mapping complexity의 변화는
 
-$$
+```math
 \frac{d}{dt}\mathcal{C}_t
 =
-2\,\mathbb{E}
+2\,\mathrm{E}
 \left[
 \mathrm{tr}(S_tM_t)
 \right]
-$$
+```
 
 로 정리된다.
 
@@ -310,18 +310,18 @@ Final difference는 약 $-0.48887$이었다.
 
 Exact complexity rate를
 
-$$
+```math
 R_t
 =
-2\,\mathbb{E}
+2\,\mathrm{E}
 \left[
 \mathrm{tr}(S_tM_t)
 \right]
-$$
+```
 
 라고 하면,
 
-$$
+```math
 \mathcal{C}_1^{(2)}
 -
 \mathcal{C}_1^{(1)}
@@ -330,7 +330,7 @@ $$
 \left(
 R_t^{(2)}-R_t^{(1)}
 \right)dt
-$$
+```
 
 가 numerical integration error 범위에서 성립했다.
 
@@ -370,8 +370,8 @@ CFG
 
 이 프로젝트의 핵심 연결은 다음과 같다.
 
-$$
-\text{interpolation / transport}
+```math
+\mathrm{interpolation\;/\;transport}
 \rightarrow
 v_t
 \rightarrow
@@ -380,18 +380,18 @@ v_t
 J_t
 \rightarrow
 \mathcal{C}(f)
-$$
+```
 
 그리고 complexity evolution은
 
-$$
+```math
 \frac{d}{dt}\mathcal{C}_t
 =
-2\,\mathbb{E}
+2\,\mathrm{E}
 \left[
 \mathrm{tr}(S_tM_t)
 \right]
-$$
+```
 
 로 주어진다.
 
